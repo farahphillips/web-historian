@@ -1,6 +1,7 @@
 var fs = require('fs');
 var path = require('path');
 var _ = require('underscore');
+var http = require('../node_modules/http-request')
 
 /*
  * You will need to reuse the same paths many times over in the course of this sprint.
@@ -25,17 +26,53 @@ exports.initialize = function(pathsObj){
 // The following function names are provided to you to suggest how you might
 // modularize your code. Keep it clean!
 
-exports.readListOfUrls = function(){
+exports.readListOfUrls = function(callback){
+  fs.readFile(exports.paths.list, function(err, data){
+    if (err) throw err;
+    callback(data.toString().split('\n'))
+  })
 };
 
-exports.isUrlInList = function(){
+exports.isUrlInList = function(url, callback){
+  exports.readListOfUrls(function(list){
+    callback(list.indexOf(url) !== -1)
+  })
 };
 
-exports.addUrlToList = function(){
+exports.addUrlToList = function(url, callback){
+  exports.isUrlInList(url, function(inList) {
+    if(!inList) {
+      fs.appendFile(exports.paths.list, url, function(err){
+        if (err) throw err;
+        callback();
+       })
+    }
+  })
 };
 
-exports.isUrlArchived = function(){
+exports.isUrlArchived = function(url, callback){
+  fs.readdir(exports.paths.archivedSites, function(err, files) {
+    if (err) throw err;
+    callback(files.indexOf(url) !== -1)
+  })
 };
 
-exports.downloadUrls = function(){
+// helper function for exports.downloadUrls
+exports.downloadFile = function(file_url) {
+  var file = fs.createWriteStream(exports.paths.archivedSites + '/' + file_url);
+
+  http.get(file_url, function(res) {
+    res.on('data', function(data) {
+      file.write(data);
+    }).on('end', function() {
+      file.end();
+    });
+  });
+};
+
+exports.downloadUrls = function(urlArray){
+  _.each(urlArray, function(url){
+    exports.downloadFile(url);
+    exports.addUrlToList(url);
+  })
 };
