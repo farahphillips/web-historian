@@ -17,6 +17,7 @@ exports.initialize = function(pathsObj){
 };
 
 exports.readListOfUrls = function(callback){
+  callback = callback || function(a){return a}
   fs.readFile(exports.paths.list, function(err, data){
     if (err) throw err;
     callback(data.toString().split('\n'))
@@ -51,9 +52,10 @@ exports.isUrlArchived = function(url, callback){
 };
 
 exports.downloadUrls = function(urlArray){
-  for (var i = 0; i < urlArray.length; i++) {
+  for (var i = 0; i < urlArray.length - 1; i++) {
     var uri = "http://" + urlArray[i];
-    request(uri).pipe(fs.createWriteStream(exports.paths.archivedSites + '/' + urlArray[i]))
-    exports.addUrlToList(urlArray[i]);
+    if(!exports.isUrlArchived(urlArray[i])) {
+      request(uri).pipe(fs.createWriteStream(exports.paths.archivedSites + '/' + urlArray[i]))
+    }
   }
 };

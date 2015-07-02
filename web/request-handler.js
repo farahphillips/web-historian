@@ -1,5 +1,6 @@
 var path = require('path');
 var archive = require('../helpers/archive-helpers');
+var static = require('node-static');
 // require more modules/folders here!
 
 var headers = {
@@ -14,22 +15,27 @@ var headers = {
 var requestAction = {
   "GET": function(req, res){
     // should return the contents of index.html
+    console.log('GET request')
     if (req.url === '/') {
-      http.createServer(function(req, res){
-      fs.readFile('public/index.html',function (err, data){
-        res.writeHead(200, {'Content-Type': 'text/html','Content-Length':data.length});
-        res.write(data);
-        res.end();
-        });
-      }).listen(8000);
     }
     // should return the content of a website from the archive
   },
   "POST": function(req, res){
-    // should append submitted sites to 'sites.txt'
+    console.log('Got POST')
+    var body = "";
+    req.on('data', function(data){ body += data});
+    req.on('end', function(){
+      if (archive.isUrlInList(body)) {
+        // get request
+      } else {
+        archive.addUrlToList(body);
+      }
+    })
+       // should append submitted sites to 'sites.txt'
   },
   "OPTIONS": function(req, res){
-    // do something
+    console.log('Get OPTIONS')
+    exports.sendResponse(res, null);
   }
 }
 
@@ -39,9 +45,10 @@ exports.sendResponse = function(res, data, statusCode){
   res.end(JSON.stringify(data));
 };
 
-exports.handleRequest = function(actionMap){
+exports.makeHandleRequest = function(requestAction){
   return function(req, res) {
-    var action = actionMap[req.method];
+    var action = requestAction[req.method];
+    console.log('action is ' + action)
     if (action) {
       action(req, res);
     } else {
@@ -50,6 +57,7 @@ exports.handleRequest = function(actionMap){
   }
 };
 
+exports.handleRequest = exports.makeHandleRequest(requestAction);
 
 // OLD EXPORTS.HANDLEREQUEST CODE
 // exports.handleRequest = function (req, res) {

@@ -2,11 +2,20 @@
 <html>
 <head>
   <link rel="stylesheet" type="text/css" href="styles.css" />
+  <script src="../../bower_components/jQuery/dist/jquery.min.js"></script>
 </head>
 <body>
   Enter a URL here:
   <form method="POST">
-    <input type="input" name="url"></input>
+    <input type="input" name="url" id='siteRequest'></input>
+    <button type="button" id='siteRequestButton'>Click Me!</button>
   </form>
+  <script>
+    $(document).ready(function() {
+      $('#siteRequestButton').on('click', function(){
+        $.post('http://127.0.0.1:8080', $('#siteRequest').val(), console.log('Successful POST'), 'text')
+      })
+    })
+  </script>
 </body>
 </html>

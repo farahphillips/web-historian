@@ -1,5 +1,3 @@
 example1.com
 example2.com
 someurl.com
-www.example.com
-www.google.com
