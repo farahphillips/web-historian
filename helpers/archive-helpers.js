@@ -24,23 +24,26 @@ exports.readListOfUrls = function(callback){
 };
 
 exports.isUrlInList = function(url, callback){
+  callback = callback || function(a){return a}
   exports.readListOfUrls(function(list){
     callback(list.indexOf(url) !== -1)
   })
 };
 
 exports.addUrlToList = function(url, callback){
+  callback = callback || function(a){return a}
   exports.isUrlInList(url, function(inList) {
     if(!inList) {
-      fs.appendFile(exports.paths.list, url, function(err){
+      fs.appendFile(exports.paths.list, url+'\n', function(err){
         if (err) throw err;
         callback();
-       })
+      })
     }
   })
 };
 
 exports.isUrlArchived = function(url, callback){
+  callback = callback || function(a){return a}
   fs.readdir(exports.paths.archivedSites, function(err, files) {
     if (err) throw err;
     callback(files.indexOf(url) !== -1)
