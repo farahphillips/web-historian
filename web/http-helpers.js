@@ -1,6 +1,8 @@
 var path = require('path');
 var fs = require('fs');
 var archive = require('../helpers/archive-helpers');
+var static = require('node-static');
+var requestHandler = require('./request-handler.js')
 
 exports.headers = headers = {
   "access-control-allow-origin": "*",
@@ -11,11 +13,36 @@ exports.headers = headers = {
 };
 
 exports.serveAssets = function(res, asset, callback) {
-  // Write some code here that helps serve up your static files!
-  // (Static files are things like html (yours or archived from others...),
-  // css, or anything that doesn't change often.)
+// allowed file types
+  var encoding = {encoding : 'utf8'}
+  console.log('Assets are ' + asset)
+  asset = '/' + asset;
+
+  fs.readFile(archive.paths.siteAssets + asset, encoding, function(err, data){
+    if(err) {
+      fs.readFile(archive.paths.archivedSites + asset, encoding, function(err, data) {
+        if (err) {
+          callback ? callback() : requestHandler.send404(res)
+        } else {
+          console.log('IT\'S HAPPENING')
+          exports.sendRedirect(res, asset)
+          // res.writeHead(200, headers);
+          // res.end(data);
+        }
+      })
+    } else {
+      exports.sendRedirect(res, asset)
+      // requestHandler.sendResponse(res,data)
+    }
+  })
 };
 
+exports.send404 = function(res){
+  requestHandler.sendResponse(res, '404: Page not found', 404)
+}
 
-
-// As you progress, keep thinking about what helper functions you can put here!
+exports.sendRedirect = function(res, location, status){
+  status = status || 302
+  res.writeHead(status, {Location:location});
+  res.end()
+}

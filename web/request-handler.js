@@ -1,7 +1,9 @@
 var path = require('path');
 var archive = require('../helpers/archive-helpers');
 var static = require('node-static');
-// require more modules/folders here!
+var http_helper = require('./http-helpers.js')
+var url = require('url')
+
 
 var headers = {
   "access-control-allow-origin": "*",
@@ -16,20 +18,43 @@ var requestAction = {
   "GET": function(req, res){
     // should return the contents of index.html
     console.log('GET request')
-    if (req.url === '/') {
-    }
-    // should return the content of a website from the archive
+    var urlPath = url.parse(req.url).pathname
+    http_helper.serveAssets(res, urlPath,
+      function(){
+      urlPath === '/' ? '/index.html' : urlPath;
+      urlPath = urlPath.slice(1)
+      archive.isUrlInList(urlPath,
+        function(found){
+        if(found) {
+          http_helper.serveAssets(res,'/'+urlPath)
+        } else {
+          http_helper.send404(res)
+        }
+      })}
+    )
   },
   "POST": function(req, res){
     console.log('Got POST')
     var body = "";
     req.on('data', function(data){ body += data});
     req.on('end', function(){
-      if (archive.isUrlInList(body)) {
-        // get request
-      } else {
-        archive.addUrlToList(body);
-      }
+      var urlPath = url.parse(body).pathname
+      archive.isUrlInList(urlPath, function(found){
+        if (found){
+          archive.isUrlArchived(urlPath, function(exists){
+            if (exists){
+              http_helper.serveAssets(res, urlPath, function(){
+                if (urlPath[0] === '/') { urlPath = urlPath.slice(1)}
+              });
+            } else {
+              http_helper.sendRedirect(res, '/loading.html')
+            }
+          })
+        } else {
+          archive.addUrlToList(urlPath);
+          http_helper.sendRedirect(res, '/loading.html')
+        }
+      })
     })
        // should append submitted sites to 'sites.txt'
   },
